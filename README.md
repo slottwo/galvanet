@@ -2,26 +2,64 @@
 
 A playground for running Distributed Systems in Python
 
-## Set up development enviroment
+> You can, but shouldn't, ignore everything below and for now simply use:
+>
+> ```sh
+> python3 -m pip install fastapi[standard]
+> python3 -m fastapi dev src/galvanet/app.py
+> ```
 
-### Install [poetry](https://python-poetry.org/docs/)
+## Set up package development environment
 
-    pipx install poetry
+### Install [pipx](https://pipx.pypa.io/stable/)
 
-### Install package
+```sh
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
+```
 
-    poetry install
+### Install [poetry](https://python-poetry.org/docs/) package manager
+
+```sh
+pipx install poetry
+```
+
+### Install [galvanet](https://github.com/slottwo/galvanet) dependencies
+
+```sh
+poetry install
+```
 
 ## Launch server application
 
-### With **taskipy**
+> Activating the virtual environment:
+>
+> ```sh
+> $ eval $(poetry env activate)
+> galvanet-py3.12 $  # Virtualenv entered
+> ```
 
-    run
+### With [taskipy](https://github.com/taskipy/taskipy)
 
-### With **fastapi**
+```sh
+task run
+```
 
-    fastapi dev scr/galvanet/app.py
+### With [fastapi](https://fastapi.tiangolo.com/pt/)
 
-### Without activate an enviroment
+```sh
+fastapi dev scr/galvanet/app.py
+```
 
-    poetry run fastapi dev src/galvanet/app.py
+### Without activate an environment
+
+```sh
+poetry run task run
+```
+
+or
+
+```sh
+poetry run fastapi dev src/galvanet/app.py
+```
