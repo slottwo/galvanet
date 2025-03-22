@@ -27,4 +27,4 @@ async def ws_endpoint(websocket: WebSocket):
                 await connection.send_text(f"User says: {message}")
     except Exception as e:
         connections.remove(websocket)
-        print("Conexção encerrada:", e)
+        print("Conexão encerrada:", e)
