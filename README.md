@@ -2,64 +2,56 @@
 
 A playground for running Distributed Systems in Python
 
-> You can, but shouldn't, ignore everything below and for now simply use:
->
-> ```sh
-> python3 -m pip install fastapi[standard]
-> python3 -m fastapi dev src/galvanet/app.py
-> ```
-
 ## Set up package development environment
 
-### Install [pipx](https://pipx.pypa.io/stable/)
+- Install [pipx](https://pipx.pypa.io/stable/)
 
 ```sh
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
-sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
 ```
 
-### Install [poetry](https://python-poetry.org/docs/) package manager
+> Optional to allow pipx actions with `--global` argument:
+>
+> ```sh
+> sudo pipx ensurepath --global
+> ```
+
+- Install [poetry](https://python-poetry.org/docs/) package manager
 
 ```sh
 pipx install poetry
 ```
 
-### Install [galvanet](https://github.com/slottwo/galvanet) dependencies
+- Install [galvanet](https://github.com/slottwo/galvanet) dependencies
 
 ```sh
+cd path/to/galvanet
 poetry install
 ```
 
 ## Launch server application
 
-> Activating the virtual environment:
+> Activating the virtual environment (some code editor can do this automatically):
 >
 > ```sh
-> $ eval $(poetry env activate)
-> galvanet-py3.12 $  # Virtualenv entered
+> eval $(poetry env activate)
+> ```
+>
+> You can execute a command without entering in the environment with:
+>
+> ```sh
+> poetry run <command>
 > ```
 
-### With [taskipy](https://github.com/taskipy/taskipy)
+- With [taskipy](https://github.com/taskipy/taskipy)
 
-```sh
-task run
-```
+    ```sh
+    task run
+    ```
 
-### With [fastapi](https://fastapi.tiangolo.com/pt/)
+- With [fastapi](https://fastapi.tiangolo.com/pt/)
 
-```sh
-fastapi dev scr/galvanet/app.py
-```
-
-### Without activate an environment
-
-```sh
-poetry run task run
-```
-
-or
-
-```sh
-poetry run fastapi dev src/galvanet/app.py
-```
+  ```sh
+  fastapi dev scr/galvanet/app.py
+  ```
