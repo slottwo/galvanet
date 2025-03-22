@@ -18,6 +18,9 @@ packages = [{include = "galvanet", from = "src"}]
 pytest = "^8.3.5"
 taskipy = "^1.14.1"
 
+[tool.taskipy.tasks]
+run = "poetry run fastapi dev src/galvanet/app.py"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
