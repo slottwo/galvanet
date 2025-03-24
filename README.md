@@ -30,7 +30,7 @@ cd path/to/galvanet
 poetry install
 ```
 
-## Launch server application
+## Usage
 
 > Activating the virtual environment (some code editor can do this automatically):
 >
@@ -44,14 +44,22 @@ poetry install
 > poetry run <command>
 > ```
 
+### Launch server application
+
 - With [taskipy](https://github.com/taskipy/taskipy)
 
-    ```sh
-    task run
-    ```
+  ```sh
+  task run
+  ```
 
 - With [fastapi](https://fastapi.tiangolo.com/pt/)
 
   ```sh
   fastapi dev scr/galvanet/app.py
   ```
+
+### List all tasks
+
+```sh
+task --list
+```
