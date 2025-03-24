@@ -3,23 +3,39 @@ name = "galvanet"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "slottwo", email = "41028091+slottwo@users.noreply.github.com"}
+    { name = "slottwo", email = "41028091+slottwo@users.noreply.github.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.12,<4.0.0"
-dependencies = [
-    "fastapi[standard] (>=0.115.11,<0.116.0)",
-]
+dependencies = ["fastapi[standard] (>=0.115.11,<0.116.0)"]
 
 [tool.poetry]
-packages = [{include = "galvanet", from = "src"}]
+packages = [{ include = "galvanet", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 taskipy = "^1.14.1"
+ruff = "^0.11.2"
 
 [tool.taskipy.tasks]
-run = "poetry run fastapi dev src/galvanet/app.py"
+lint = 'ruff check'
+
+pre_format = 'ruff check --fix'
+format = 'ruff format'
+
+run = 'fastapi dev src/galvanet/app.py'
+
+# pre_test = 'task lint'
+# test = 'pytest -s -x --cov=... -vv'
+# post_test = 'coverage html'
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+
+[tool.ruff.format]
+preview = true
+quote-style = 'preserve'
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
