@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
@@ -9,9 +11,9 @@ connections: list[WebSocket] = []
 
 
 # Root endpoint
-@app.get('/')
+@app.get('/', status_code=HTTPStatus.OK)
 async def root():
-    with open("src/index.html") as file:
+    with open("src/index.html", encoding='utf-8') as file:
         return HTMLResponse(file.read())
 
 
