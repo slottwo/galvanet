@@ -17,14 +17,14 @@ database = []
 
 # Root endpoint
 @app.get("/", status_code=HTTPStatus.OK, response_class=HTMLResponse)
-async def read_root():
+def read_root():
     with open("src/index.html", encoding="utf-8") as file:
         return HTMLResponse(file.read())
 
 
 # Users endpoint
 @app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
-async def create_user(user: UserSchema):
+def create_user(user: UserSchema):
     user_w_id = UserDB(id=1 + len(database), **user.model_dump())
     database.append(user_w_id)
     return user_w_id
