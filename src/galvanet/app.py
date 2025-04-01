@@ -3,6 +3,8 @@ from http import HTTPStatus
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
+from galvanet.schemas import UserPublic, UserSchema
+
 # Application
 app = FastAPI()
 
@@ -11,14 +13,20 @@ connections: list[WebSocket] = []
 
 
 # Root endpoint
-@app.get('/', status_code=HTTPStatus.OK)
-async def root():
-    with open("src/index.html", encoding='utf-8') as file:
+@app.get("/", status_code=HTTPStatus.OK, response_class=HTMLResponse)
+async def read_root():
+    with open("src/index.html", encoding="utf-8") as file:
         return HTMLResponse(file.read())
 
 
+# Users endpoint
+@app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
+async def create_user(user: UserSchema):
+    return user
+
+
 # WebSocket endpoint
-@app.websocket('/ws')
+@app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket):
     await websocket.accept()
     connections.append(websocket)
