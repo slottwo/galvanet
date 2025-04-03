@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from galvanet.app import app
 from galvanet.models import table_registry
+from galvanet.settings import Settings
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def client():
 @pytest.fixture
 def session():
     # Arrange
-    engine = create_engine("sqlite:///:memory:")
+    engine = create_engine(Settings().DATABASE_URL)
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
