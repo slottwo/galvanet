@@ -77,6 +77,8 @@ def test_users_delete_not_found(client):
     assert response.json() == {"detail": "User not found"}
 
 
-# def test_ws_endpoint(client: TestClient):
-#
-#     client.websocket_connect()
+def test_ws_endpoint(client):
+    with client.websocket_connect(url="/ws") as websocket:
+        websocket.send_text("hey")
+        data = websocket.receive_text()
+        assert data == "User says: hey"
