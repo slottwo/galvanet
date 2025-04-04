@@ -58,6 +58,14 @@ poetry install
   fastapi dev scr/galvanet/app.py
   ```
 
+
+### Execute tests from `src/tests`
+
+```sh
+task test
+```
+
+
 ### List all tasks
 
 ```sh
