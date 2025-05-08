@@ -26,16 +26,18 @@ def read_root():
 
 
 @app.get("/users/", response_model=UserList)
-def read_users():
-    return {"users": ...}
+def read_users(
+    limit: int = 10, offset: int = 0, session: Session = Depends(get_session)
+):
+    users_db = session.scalars(select(User).limit(limit).offset(offset))
+    return {"users": users_db}
 
 
 @app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_user(user: UserSchema, session: Session = Depends(get_session)):
-
     if session.scalar(select(User).where(User.username == user.username)):
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.CONFLICT,
             detail="Username already exists",
         )
 
@@ -45,36 +47,54 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(user_db)
 
-    return user_db  # created user
+    return user_db
 
 
 @app.get("/users/{user_id}", response_model=UserPublic)
-def read_user(user_id: int):
-    if ...:  # check user_id
-        return ...  # user
+def read_user(user_id: int, session: Session = Depends(get_session)):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if user_db:
+        return user_db
+
     raise HTTPException(
         status_code=HTTPStatus.NOT_FOUND, detail="User not found"
     )
 
 
 @app.put("/users/{user_id}", response_model=UserPublic)
-def update_user(user_id: int, user: UserSchema):
-    if ...:  # check user_id
-        ...  # update user
-        return ...  # updated user
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail="User not found"
-    )
+def update_user(
+    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+):
+    user_db: User = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="User not found"
+        )
+
+    user_db.username = user.username
+    user_db.password = user.password
+
+    session.commit()
+    session.refresh(user_db)
+
+    return user_db
 
 
 @app.delete("/users/{user_id}", response_model=UserPublic)
-def delete_user(user_id: int, user: UserSchema):
-    if ...:  # check user_id
-        ...  # delete user
-        return ...  # deleted user
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail="User not found"
-    )
+def delete_user(user_id: int, session: Session = Depends(get_session)):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="User not found"
+        )
+
+    session.delete(user_db)
+    session.commit()
+
+    return user_db
 
 
 # Websockets endpoints
@@ -89,6 +109,6 @@ async def ws_endpoint(websocket: WebSocket):
             message: str = await websocket.receive_text()
             for connection in connections:
                 await connection.send_text(f"User says: {message}")
-    except Exception as e:
+    except Exception:  # as e:
         connections.remove(websocket)
-        print("Conexão encerrada:", e)
+        # print("Conexão encerrada:", e)
