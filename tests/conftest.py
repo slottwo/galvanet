@@ -1,18 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from galvanet.app import app, connections
 from galvanet.database import get_session
-from galvanet.models import table_registry
-from galvanet.settings import Settings
+from galvanet.models import User, table_registry
 
 
 @pytest.fixture
 def client(session) -> TestClient:
-    
     def get_session_override():
         return session
 
@@ -20,7 +18,7 @@ def client(session) -> TestClient:
         app.dependency_overrides[get_session] = get_session_override
 
         yield client
-    
+
     app.dependency_overrides.clear()
 
 
@@ -35,7 +33,7 @@ def cleanup_connections() -> None:
 def session() -> Session:
     # Arrange
     engine = create_engine(
-        "sqlite:///:memory",
+        "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
@@ -46,3 +44,14 @@ def session() -> Session:
 
     # Tier down
     table_registry.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def user(session) -> User:
+    user = User(username="test", password="0000")
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
