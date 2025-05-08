@@ -22,6 +22,16 @@ def test_user_create_created(client):
     assert response.json() == {"id": 1, "username": "test"}
 
 
+def test_user_create_conflict(client, user):
+    response = client.post(
+        "/users/",
+        json={"username": "test", "password": "0000"},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {"detail": "Username already exists"}
+
+
 def test_users_read_ok(client):
     response = client.get("/users/")
 
