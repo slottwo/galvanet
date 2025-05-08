@@ -1,8 +1,12 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, WebSocket
 from fastapi.responses import HTMLResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from galvanet.database import get_session
+from galvanet.models import User
 from galvanet.schemas import UserList, UserPublic, UserSchema
 
 # Application
@@ -12,7 +16,7 @@ app = FastAPI()
 connections: list[WebSocket] = []
 
 
-# HTTP endpoints
+# HTTP endpoints:
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -27,9 +31,21 @@ def read_users():
 
 
 @app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema):
-    ...  # create user
-    return ...  # created user
+def create_user(user: UserSchema, session: Session = Depends(get_session)):
+
+    if session.scalar(select(User).where(User.username == user.username)):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Username already exists",
+        )
+
+    user_db = User(username=user.username, password=user.password)
+
+    session.add(user_db)
+    session.commit()
+    session.refresh(user_db)
+
+    return user_db  # created user
 
 
 @app.get("/users/{user_id}", response_model=UserPublic)
