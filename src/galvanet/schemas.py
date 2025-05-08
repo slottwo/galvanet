@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserSchema(BaseModel):
@@ -9,10 +9,7 @@ class UserSchema(BaseModel):
 class UserPublic(BaseModel):
     id: int
     username: str
-
-
-class UserDB(UserSchema):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserList(BaseModel):
