@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Galavanet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 200px;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 5px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        #chatMessages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Seção de Login/Registro -->
+    <div id="authSection" class="section">
+        <h2>Login/Registro</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="register()">Registrar</button>
+    </div>
+
+    <!-- Seção do Chat -->
+    <div id="chatSection" class="section hidden">
+        <h2>Chat</h2>
+        <div id="chatMessages"></div>
+        <input type="text" id="messageInput" placeholder="Digite sua mensagem">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+
+    <!-- Seção de Usuários -->
+    <div id="usersSection" class="section hidden">
+        <h2>Usuários</h2>
+        <button onclick="loadUsers()">Recarregar Lista</button>
+        <ul id="usersList"></ul>
+    </div>
+
+    <!-- Seção de Perfil -->
+    <div id="profileSection" class="section hidden">
+        <h2>Seu Perfil</h2>
+        <button onclick="logout()">Logout</button>
+        <button onclick="deleteAccount()">Deletar Conta</button>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let ws = null;
+
+        // Funções de Autenticação
+        async function login() {
+            const response = await fetch('/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `username=${encodeURIComponent(username.value)}&password=${encodeURIComponent(password.value)}`
+            });
+
+            if (response.ok) {
+                const tokenData = await response.json();
+                localStorage.setItem('token', tokenData.access_token);
+                initializeApp();
+            } else {
+                alert('Login falhou!');
+            }
+        }
+
+        async function register() {
+            const response = await fetch('/users/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username.value,
+                    password: password.value
+                })
+            });
+
+            if (response.status === 201) {
+                alert('Registro bem-sucedido! Faça login.');
+            } else {
+                alert('Registro falhou!');
+            }
+        }
+
+        // Inicialização da Aplicação
+        function initializeApp() {
+            document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
+            document.getElementById('authSection').classList.add('hidden');
+
+            // Conectar ao WebSocket
+            ws = new WebSocket(`ws://${window.location.host}/ws/chat`);
+
+            ws.onmessage = function (event) {
+                const messages = document.getElementById('chatMessages');
+                messages.innerHTML += `<div>${event.data}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+            };
+
+            loadUsers();
+        }
+
+        // Chat
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (message && ws) {
+                ws.send(message);
+                document.getElementById('messageInput').value = '';
+            }
+        }
+
+        // Usuários
+        async function loadUsers() {
+            const response = await fetch('/users/', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const list = document.getElementById('usersList');
+                list.innerHTML = data.users.map(user =>
+                    `<li>${user.username} (ID: ${user.id})</li>`
+                ).join('');
+            }
+        }
+
+        // Perfil
+        async function logout() {
+            localStorage.removeItem('token');
+            window.location.reload();
+        }
+
+        async function deleteAccount() {
+            if (confirm('Tem certeza que deseja deletar sua conta?')) {
+                await fetch(`/users/${currentUser.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                logout();
+            }
+        }
+
+        // Verificar autenticação ao carregar
+        (function () {
+            const token = localStorage.getItem('token');
+            if (token) initializeApp();
+        })();
+    </script>
+</body>
+
+</html>
