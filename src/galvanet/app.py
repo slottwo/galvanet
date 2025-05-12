@@ -1,20 +1,30 @@
 from http import HTTPStatus
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from galvanet.database import get_session
 from galvanet.models import User
-from galvanet.schemas import UserList, UserPublic, UserSchema
+from galvanet.schemas import Token, UserList, UserPublic, UserSchema
+from galvanet.security import pwd_check, pwd_hash, create_access_token
 
 # Application
 app = FastAPI()
 
-# List to store all connected clients
+# List to store connected only-chatting clients
 connections: list[WebSocket] = []
 
+# List to store running games and it connected clients
+active_games = {}  # game_id: str, websockets: list[str]
 
 # HTTP endpoints:
 
@@ -41,7 +51,7 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
             detail="Username already exists",
         )
 
-    user_db = User(username=user.username, password=user.password)
+    user_db = User(username=user.username, password=pwd_hash(user.password))
 
     session.add(user_db)
     session.commit()
@@ -74,7 +84,7 @@ def update_user(
         )
 
     user_db.username = user.username
-    user_db.password = user.password
+    user_db.password = pwd_hash(user.password)
 
     session.commit()
     session.refresh(user_db)
@@ -97,18 +107,70 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
     return user_db
 
 
+@app.post("/token", response_model=Token)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user_db = session.scalar(
+        select(User).where(User.username == form_data.username)
+    )
+
+    if not user_db and not pwd_check(form_data.password, user_db.password):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="Invalid credentials"
+        )
+    
+    access_token = create_access_token({'sub': user_db.username})
+
+
 # Websockets endpoints
 
-
+"""
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket):
     await websocket.accept()
     connections.append(websocket)
+
     try:
         while True:
             message: str = await websocket.receive_text()
             for connection in connections:
-                await connection.send_text(f"User says: {message}")
-    except Exception:  # as e:
+                await connection.send_text(message)
+    except WebSocketDisconnect:
         connections.remove(websocket)
-        # print("Conexão encerrada:", e)
+    except Exception as e:
+        connections.remove(websocket)
+"""
+
+
+@app.websocket("/ws/chat")
+async def ws_chat(websocket: WebSocket):
+    await websocket.accept()
+    connections.append(websocket)
+
+    try:
+        while True:
+            message: str = await websocket.receive_text()
+            for connection in connections:
+                await connection.send_text(message)
+    except WebSocketDisconnect:
+        connections.remove(websocket)
+    except Exception:  # pragma: no cover
+        connections.remove(websocket)
+
+
+"""
+@app.websockets("/ws/game/{game_id}")
+async def ws_game(websocket: WebSocket):
+    await websocket.accept()
+    active_games.setdefault(game_id, []).append(websocket)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            for connection in active_games[game_id]:
+                await connection.send_json(data)
+    except WebSocketDisconnect:
+        active_games[game_id].remove(websocket)
+"""
