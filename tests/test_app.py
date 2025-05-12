@@ -98,6 +98,28 @@ def test_users_delete_not_found(client):
     assert response.json() == {"detail": "User not found"}
 
 
+def test_get_token_ok(client, user):
+    response = client.post(
+        "/token",
+        data={"username": user.username, "password": user.plain_password},
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert token["token_type"] == "Bearer"
+    assert token["access_token"]
+
+
+def test_get_token_bad_request(client, user):
+    response = client.post(
+        "/token", data={"username": user.username, "password": "1234"}
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {"detail": "Invalid credentials"}
+
+
 def test_ws_chat(client):
     with client.websocket_connect(url="/ws/chat") as websocket:
         websocket.send_text("hey")
