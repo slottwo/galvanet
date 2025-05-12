@@ -15,7 +15,12 @@ from sqlalchemy.orm import Session
 from galvanet.database import get_session
 from galvanet.models import User
 from galvanet.schemas import Token, UserList, UserPublic, UserSchema
-from galvanet.security import pwd_check, pwd_hash, create_access_token
+from galvanet.security import (
+    create_access_token,
+    get_current_user,
+    pwd_check,
+    pwd_hash,
+)
 
 # Application
 app = FastAPI()
@@ -74,7 +79,10 @@ def read_user(user_id: int, session: Session = Depends(get_session)):
 
 @app.put("/users/{user_id}", response_model=UserPublic)
 def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ):
     user_db: User = session.scalar(select(User).where(User.id == user_id))
 
@@ -93,7 +101,11 @@ def update_user(
 
 
 @app.delete("/users/{user_id}", response_model=UserPublic)
-def delete_user(user_id: int, session: Session = Depends(get_session)):
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
     user_db = session.scalar(select(User).where(User.id == user_id))
 
     if not user_db:
@@ -116,12 +128,14 @@ def login(
         select(User).where(User.username == form_data.username)
     )
 
-    if not user_db and not pwd_check(form_data.password, user_db.password):
+    if not user_db or not pwd_check(form_data.password, user_db.password):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="Invalid credentials"
         )
-    
-    access_token = create_access_token({'sub': user_db.username})
+
+    access_token = create_access_token({"sub": user_db.username})
+
+    return {"access_token": access_token, "token_type": "Bearer"}
 
 
 # Websockets endpoints
