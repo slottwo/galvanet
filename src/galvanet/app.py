@@ -155,23 +155,32 @@ async def ws_endpoint(websocket: WebSocket):
 
 
 @app.websocket("/ws/chat")
-async def ws_chat(websocket: WebSocket):
+async def ws_chat(
+    websocket: WebSocket,
+    # , session: Session = Depends(get_current_user)
+):
     await websocket.accept()
     connections.append(websocket)
 
     try:
+        # token = await websocket.receive_text()
+        # user = await get_current_user(session, token)
+        # user.is_online = True
+        # session.commit()
+
         while True:
             message: str = await websocket.receive_text()
             for connection in connections:
                 await connection.send_text(message)
     except WebSocketDisconnect:
         connections.remove(websocket)
-    except Exception:  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         connections.remove(websocket)
+        print(f"\nError: {e}")
 
 
 """
-@app.websockets("/ws/game/{game_id}")
+@app.websocket("/ws/game/{game_id}")
 async def ws_game(websocket: WebSocket):
     await websocket.accept()
     active_games.setdefault(game_id, []).append(websocket)

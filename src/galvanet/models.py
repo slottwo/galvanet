@@ -16,6 +16,7 @@ class User:
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )
-    last_activity: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now()
-    )
+    # is_online: Mapped[bool] = mapped_column(default=False)
+    # last_activity: Mapped[datetime] = mapped_column(
+    #     init=False, server_default=func.now()
+    # )
