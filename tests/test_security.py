@@ -26,24 +26,28 @@ def test_jwt_invalid_token(client):
 
 # def test_jwt_invalid_token_without_sub(client):
 
+
 def test_get_current_user_not_found(client):
-    data = {'nobody': 'test'}
+    data = {"nobody": "test"}
     token = create_access_token(data)
 
     response = client.delete(
-        '/users/1',
-        headers={'Authorization': f'Bearer {token}'},
+        "/users/1",
+        headers={"Authorization": f"Bearer {token}"},
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {'detail': 'Could not validate credentials'}
+    assert response.json() == {"detail": "Could not validate credentials"}
 
 
 def test_get_current_user_does_not_exists(client):
-    data = {'sub': 'test'}
+    data = {"sub": "test"}
     token = create_access_token(data)
 
     response = client.delete(
-        '/users/1',
-        headers={'Authorization': f'Bearer {token}'},
+        "/users/1",
+        headers={"Authorization": f"Bearer {token}"},
     )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"detail": "Could not validate credentials"}
