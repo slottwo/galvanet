@@ -11,12 +11,13 @@ from sqlalchemy.orm import Session
 
 from galvanet.database import get_session
 from galvanet.models import User
+from galvanet.settings import Settings
 
 pwd_context = PasswordHash.recommended()
 
-SECRET_KEY = "bumbum"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = Settings().SECRET_KEY
+ALGORITHM = Settings().TOKEN_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = Settings().ACCESS_TOKEN_EXPIRE_MINUTES
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
 
