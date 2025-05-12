@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 from galvanet.app import app, connections
 from galvanet.database import get_session
 from galvanet.models import User, table_registry
+from galvanet.security import pwd_hash
 
 
 @pytest.fixture
@@ -48,10 +49,14 @@ def session() -> Session:
 
 @pytest.fixture
 def user(session) -> User:
-    user = User(username="test", password="0000")
+    pwd = "0000"
+
+    user = User(username="test", password=pwd_hash(pwd))
 
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    user.plain_password = pwd  # Monkey Patch
 
     return user
