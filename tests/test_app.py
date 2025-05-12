@@ -64,38 +64,48 @@ def test_user_read_not_found(client):
     assert response.json() == {"detail": "User not found"}
 
 
-def test_user_update_ok(client, user):
+def test_user_update_ok(client, user, token):
     response = client.put(
-        "/users/1", json={"username": "t3st", "password": "0000"}
+        f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "t3st", "password": "password"},
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"id": 1, "username": "t3st"}
 
 
-def test_user_update_not_found(client):
+def test_user_update_forbidden(client, user, token):
     response = client.put(
-        "/users/1", json={"username": "t3st", "password": "0000"}
+        f"/users/{user.id + 1}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "t3st", "password": "password"},
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {"detail": "Not enough permissions"}
 
 
-def test_users_delete_ok(client, user):
+def test_users_delete_ok(client, user, token):
     user_public = UserPublic.model_validate(user).model_dump()
 
-    response = client.delete("/users/1")
+    response = client.delete(
+        f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == user_public
 
 
-def test_users_delete_not_found(client):
-    response = client.delete("/users/1")
+def test_users_delete_forbidden(client, user, token):
+    response = client.delete(
+        f"/users/{user.id + 1}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {"detail": "Not enough permissions"}
 
 
 def test_get_token_ok(client, user):
@@ -113,7 +123,8 @@ def test_get_token_ok(client, user):
 
 def test_get_token_bad_request(client, user):
     response = client.post(
-        "/token", data={"username": user.username, "password": "1234"}
+        "/token",
+        data={"username": user.username, "password": "invalid-password"},
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST

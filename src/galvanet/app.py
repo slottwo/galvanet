@@ -84,20 +84,18 @@ def update_user(
     session: Session = Depends(get_session),
     current_user=Depends(get_current_user),
 ):
-    user_db: User = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="User not found"
+            status_code=HTTPStatus.FORBIDDEN, detail="Not enough permissions"
         )
 
-    user_db.username = user.username
-    user_db.password = pwd_hash(user.password)
+    current_user.username = user.username
+    current_user.password = pwd_hash(user.password)
 
     session.commit()
-    session.refresh(user_db)
+    session.refresh(current_user)
 
-    return user_db
+    return current_user
 
 
 @app.delete("/users/{user_id}", response_model=UserPublic)
@@ -106,17 +104,15 @@ def delete_user(
     session: Session = Depends(get_session),
     current_user=Depends(get_current_user),
 ):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="User not found"
+            status_code=HTTPStatus.FORBIDDEN, detail="Not enough permissions"
         )
 
-    session.delete(user_db)
+    session.delete(current_user)
     session.commit()
 
-    return user_db
+    return current_user
 
 
 @app.post("/token", response_model=Token)
